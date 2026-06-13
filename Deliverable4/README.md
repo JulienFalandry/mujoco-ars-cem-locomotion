@@ -1,8 +1,8 @@
 # Deliverable 4 — Locomotion Optimization with ARS and CEM
 
-This folder contains the code and results for Deliverable 4 of the Optimization class project: locomotion optimization using Cross Entropy Method (CEM) and Augmented Random Search (ARS) with MuJoCo MJX and JAX.
+This folder contains the code and results for Deliverable 4 of the Optimization class project: locomotion optimization using Augmented Random Search (ARS) and the Cross Entropy Method (CEM) with MuJoCo MJX and JAX.
 
-The original assignment asks for ARS on Humanoid locomotion. In this implementation, the final locomotion experiment is performed on a Walker2d MuJoCo model, which is used as a simpler bipedal locomotion proxy. The goal remains the same: compare the scalability of CEM and ARS on a high-dimensional continuous-control locomotion task.
+The original assignment focuses on Humanoid locomotion. In this implementation, the final experiment is performed on a custom Walker2d MuJoCo model, used as a simpler bipedal locomotion proxy. The objective remains the same: compare how CEM and ARS scale on a high-dimensional continuous-control locomotion task.
 
 ## Folder structure
 
@@ -11,136 +11,116 @@ Deliverable4/
 ├── README.md
 ├── requirements.txt
 ├── run_deliverable4_hpc.py
+├── Deliverable4_Final_Report.pdf
 └── results_mjx/
-    ├── learning_curves.png
     ├── metrics.json
+    ├── learning_curves.png
     ├── best_ars_policy.npz
-    └── best_ars_walker2d_policy_over_6.0s__strong_balanced.mp4
+    ├── best_ars_walker2d_policy_over_6.0s__strong_stable.mp4
+    └── best_cem_walker2d_policy_over_6.0s__fairer_long.mp4
 ```
 
 ## Main script
 
-The main experiment is implemented in:
+The main script is:
 
 ```text
 run_deliverable4_hpc.py
 ```
 
-This script performs:
+It performs the full locomotion experiment:
 
-* Walker2d MuJoCo model creation
-* Transfer of the model to MJX
-* Batched rollouts using `jax.vmap`
-* CEM baseline optimization
-* ARS optimization with state normalization
-* Learning curve generation
-* Policy diagnostics
-* Video rendering of the optimized gait
-* Saving of final metrics and policy parameters
+* creates the Walker2d MuJoCo model;
+* transfers the model to MJX;
+* runs batched rollouts with JAX;
+* trains a policy with CEM;
+* trains a policy with ARS;
+* saves metrics and learning curves;
+* renders the best ARS policy video;
+* optionally renders the best CEM policy video.
 
 ## Methods
 
 ### Cross Entropy Method
 
-CEM samples a population of candidate policies from a Gaussian distribution. At each iteration, the best-performing elite policies are selected and used to update the sampling distribution.
+CEM samples a population of candidate policies from a Gaussian distribution. Each candidate is evaluated over the rollout horizon, then the best candidates are selected as elites. The Gaussian mean and standard deviation are updated from these elites.
 
-In this project, CEM is used as a baseline attempt on the locomotion task. It improves compared with random policies but remains much less effective than ARS for the high-dimensional continuous-control problem.
+For the final version, CEM was extended using the `fairer_long` mode. This longer CEM baseline was added to make the comparison more meaningful than the previous shorter CEM run.
 
 ### Augmented Random Search
 
-ARS evaluates random perturbations of a linear policy. For each direction, the positive and negative perturbations are tested, and the policy is updated using the best-performing directions.
+ARS optimizes a linear policy by sampling random perturbation directions around the current parameters. For each direction, both the positive and negative perturbations are evaluated. The update is computed from the best-performing directions.
 
-The implemented ARS version uses state normalization and evaluates perturbations in parallel using MJX and JAX. This makes it more scalable than CEM for locomotion.
-
-## Hyperparameter tuning
-
-The ARS implementation allows tuning of the main parameters requested in the assignment:
-
-```text
-α  = step size
-N  = number of perturbation directions
-b  = number of top-performing directions used for the update
-ν  = exploration noise
-```
-
-The final run used the latest tuned reward and ARS configuration available in the repository code. Although the configuration label still appears as `strong_balanced` / `strong_stable` in some generated files, the code contains the final reward-shaping updates.
+The final ARS run uses the `strong_stable` mode. State normalization is included to improve training stability.
 
 ## Final results
 
-The final ARS policy produced a stable forward gait over the 6-second evaluation horizon.
+The final experiment was run on the GPU backend with a 6-second rollout horizon and 6-second video rendering horizon.
 
-Main final metrics:
+| Method |            Mode | Physics steps | Best reward |
+| ------ | --------------: | ------------: | ----------: |
+| CEM    |   `fairer_long` |    92,160,000 |     1698.54 |
+| ARS    | `strong_stable` |   323,400,000 |     5780.55 |
 
-```text
-Distance travelled: approximately 4.58 m
-Mean forward velocity: approximately 0.76 m/s
-First fallen step: 600 / 600
-```
+The final ARS policy achieved the following diagnostic performance:
 
-This indicates that the final ARS policy remains upright for the full evaluation horizon and moves forward with a visible walking gait.
+| Metric                 |     Value |
+| ---------------------- | --------: |
+| Distance travelled     |    6.94 m |
+| Mean forward velocity  |  1.16 m/s |
+| Minimum torso height   |    0.94 m |
+| Maximum absolute pitch | 0.676 rad |
+| First fall step        | 600 / 600 |
 
-The CEM baseline remained significantly weaker, confirming that CEM is less suitable for this higher-dimensional locomotion task.
+The extended CEM run improved the baseline compared with the previous shorter CEM experiment, but ARS still achieved a much stronger final policy. The ARS policy produced stable forward locomotion over the full 6-second rollout, while the CEM policy remained visibly weaker in the rendered video.
 
-## Sample efficiency
+## Learning curves
 
-The experiment also reports the approximate number of physics steps used by each method.
-
-The final results are stored in:
-
-```text
-results_mjx/metrics.json
-```
-
-The learning curve comparison is stored in:
+The file:
 
 ```text
 results_mjx/learning_curves.png
 ```
 
-The final rendered policy video is stored in:
+shows the training curves for both methods.
+
+The curve confirms that ARS reaches a significantly higher final reward than CEM on this locomotion task. CEM improves with the longer `fairer_long` run, but it remains less effective for this high-dimensional continuous-control problem.
+
+## Output videos
+
+The final ARS video is:
 
 ```text
-results_mjx/best_ars_walker2d_policy_over_6.0s__strong_balanced.mp4
+results_mjx/best_ars_walker2d_policy_over_6.0s__strong_stable.mp4
 ```
 
-## How to run
+The final CEM video is:
 
-Install the dependencies:
-
-```bash
-pip install -r requirements.txt
+```text
+results_mjx/best_cem_walker2d_policy_over_6.0s__fairer_long.mp4
 ```
 
-Run the full experiment:
+The ARS video is the main optimized locomotion result. The CEM video is included as an additional comparison to show the weaker behavior of the CEM policy.
 
-```bash
-python run_deliverable4_hpc.py \
-  --run-mode strong \
-  --cem-mode fairer_slow \
-  --train-seconds 6 \
-  --video-seconds 6 \
-  --output-dir results_mjx
-```
+## How to reproduce the final run
 
-For live output in an HPC or Slurm environment, use:
+The final experiment can be reproduced with:
 
 ```bash
 python -u run_deliverable4_hpc.py \
-  --run-mode strong \
-  --cem-mode fairer_slow \
+  --run-mode strong_stable \
+  --cem-mode fairer_long \
   --train-seconds 6 \
   --video-seconds 6 \
-  --output-dir results_mjx
+  --output-dir results_mjx \
+  --render-cem
 ```
+
+The `--render-cem` flag is required to generate the CEM video. Without it, the script only renders the ARS policy video.
 
 ## Notes
 
-The final experiment was run on a GPU using JAX/MJX batched rollouts. This greatly accelerated the evaluation of candidate policies compared with sequential CPU rollouts.
-
-The final report discusses:
-
-* why ARS scales better than CEM,
-* the effect of JAX/MJX parallelization,
-* the sample-efficiency comparison,
-* the limitations of using Walker2d instead of the full Humanoid model,
-* and the final locomotion performance.
+* The implementation uses Walker2d as a bipedal locomotion proxy instead of the full Humanoid environment.
+* The final comparison is not perfectly equal-budget, because ARS uses more physics steps than CEM.
+* The goal of the final experiment is to show that ARS scales better than CEM on this type of high-dimensional locomotion problem.
+* The `.slurm` launcher file is kept local because it depends on the HPC account, partition, and GPU configuration.
