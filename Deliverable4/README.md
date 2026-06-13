@@ -1,250 +1,146 @@
-\# MuJoCo MJX Locomotion Optimisation using CEM and ARS
+# Deliverable 4 — Locomotion Optimisation with ARS and CEM
 
+This folder contains the code and results for Deliverable 4 of the Optimisation class project: locomotion optimisation using the Cross-Entropy Method (CEM) and Augmented Random Search (ARS) with MuJoCo MJX and JAX.
 
+The original assignment asks for ARS on Humanoid locomotion. In this implementation, the final locomotion experiment is performed on a Walker2d MuJoCo model, which is used as a simpler bipedal locomotion proxy. The goal remains the same: compare the scalability of CEM and ARS on a high-dimensional continuous-control locomotion task.
 
-This repository contains the code and results for the final project of the Optimisation course.
-
-The goal is to compare gradient-free optimisation methods, mainly the Cross-Entropy Method (CEM) and Augmented Random Search (ARS), on a MuJoCo MJX locomotion task.
-
-
-
-\## Project overview
-
-
-
-The project studies how CEM and ARS behave on a high-dimensional continuous-control locomotion problem.
-
-CEM is used as a baseline attempt, while ARS is used as the main scalable optimiser for the walking policy.
-
-
-
-The implementation uses:
-
-
-
-\* MuJoCo / MJX for physics simulation
-
-\* JAX for batched GPU-accelerated rollouts
-
-\* CEM as a baseline optimiser
-
-\* ARS with state normalisation for locomotion optimisation
-
-\* Slurm scripts for running the experiments on the University of Tartu HPC GPU cluster
-
-
-
-\## Repository structure
-
-
+## Folder structure
 
 ```text
-
-.
-
-├── run\_deliverable4\_hpc.py      # Main training and evaluation script
-
-├── submit\_mjx\_gpu.slurm         # Slurm script for running the full experiment on HPC
-
-├── test\_jax\_gpu.slurm           # Small script to verify JAX GPU access
-
-├── setup\_env.sh                 # Environment setup helper for HPC
-
-├── requirements\_hpc.txt         # Python dependencies
-
-├── README\_HPC.md                # Additional HPC notes
-
-└── results\_mjx/
-
-&#x20;   ├── learning\_curves.png      # CEM vs ARS learning curve
-
-&#x20;   ├── metrics.json             # Final numerical metrics
-
-&#x20;   ├── best\_ars\_policy.npz      # Saved best ARS policy
-
-&#x20;   └── best\_ars\_walker2d\_policy\_over\_6.0s\_\_strong\_balanced.mp4
-
+Deliverable4/
+├── README.md
+├── requirements.txt
+├── run_deliverable4_hpc.py
+└── results_mjx/
+    ├── learning_curves.png
+    ├── metrics.json
+    ├── best_ars_policy.npz
+    └── best_ars_walker2d_policy_over_6.0s__strong_balanced.mp4
 ```
 
+## Main script
 
-
-\## Methods
-
-
-
-\### Cross-Entropy Method
-
-
-
-CEM samples a population of candidate policies from a Gaussian distribution, evaluates them in parallel, selects the best-performing elite policies, and updates the distribution mean and standard deviation.
-
-
-
-In this project, CEM is used as a baseline attempt on the locomotion task. It improves compared with random policies, but it remains much less scalable than ARS for the high-dimensional policy search problem.
-
-
-
-\### Augmented Random Search
-
-
-
-ARS updates a linear policy by sampling random perturbation directions, evaluating positive and negative perturbations, and moving the policy parameters in the direction of the best-performing perturbations.
-
-
-
-The ARS implementation includes state normalisation and batched MJX rollouts, allowing many candidate policies to be evaluated in parallel on GPU.
-
-
-
-\## Final result
-
-
-
-The best ARS configuration was `strong\_balanced`.
-
-
-
-Main diagnostic result over a 6-second horizon:
-
-
+The main experiment is implemented in:
 
 ```text
+run_deliverable4_hpc.py
+```
 
-Best ARS reward: 9349.90
+This script performs:
 
-Best iteration: 236
+* Walker2d MuJoCo model creation
+* Transfer of the model to MJX
+* Batched rollouts using `jax.vmap`
+* CEM baseline optimization
+* ARS optimisation with state normalisation
+* Learning curve generation
+* Policy diagnostics
+* Video rendering of the optimised gait
+* Saving of final metrics and policy parameters
 
-Distance travelled: 10.82 m
+## Methods
 
-Mean forward velocity: 1.81 m/s
+### Cross-Entropy Method
 
+CEM samples a population of candidate policies from a Gaussian distribution. At each iteration, the best-performing elite policies are selected and used to update the sampling distribution.
+
+In this project, CEM is used as a baseline attempt on the locomotion task. It improves compared with random policies but remains much less effective than ARS for the high-dimensional continuous-control problem.
+
+### Augmented Random Search
+
+ARS evaluates random perturbations of a linear policy. For each direction, the positive and negative perturbations are tested, and the policy is updated using the best-performing directions.
+
+The implemented ARS version uses state normalisation and evaluates perturbations in parallel using MJX and JAX. This makes it more scalable than CEM for locomotion.
+
+## Hyperparameter tuning
+
+The ARS implementation allows tuning of the main parameters requested in the assignment:
+
+```text
+α  = step size
+N  = number of perturbation directions
+b  = number of top-performing directions used for the update
+ν  = exploration noise
+```
+
+The final run used the latest tuned reward and ARS configuration available in the repository code. Although the configuration label still appears as `strong_balanced` / `strong_stable` in some generated files, the code contains the final reward-shaping updates.
+
+## Final results
+
+The final ARS policy produced a stable forward gait over the 6-second evaluation horizon.
+
+Main final metrics:
+
+```text
+Distance travelled: approximately 4.58 m
+Mean forward velocity: approximately 0.76 m/s
 First fallen step: 600 / 600
-
 ```
 
+This indicates that the final ARS policy remains upright for the full evaluation horizon and moves forward with a visible walking gait.
 
+The CEM baseline remained significantly weaker, confirming that CEM is less suitable for this higher-dimensional locomotion task.
 
-The result shows that ARS successfully learned a forward locomotion gait, while CEM remained much less effective on the same high-dimensional control problem.
+## Sample efficiency
 
+The experiment also reports the approximate number of physics steps used by each method.
 
-
-\## Sample efficiency
-
-
-
-Approximate number of physics steps:
-
-
+The final results are stored in:
 
 ```text
-
-CEM: 34,560,000 steps
-
-ARS: 277,200,000 steps
-
+results_mjx/metrics.json
 ```
 
-
-
-Although ARS used more total environment steps in the final strong run, it produced a much better locomotion policy and scaled better to the high-dimensional continuous control setting.
-
-
-
-\## How to run on the HPC
-
-
-
-First, create and activate the Python environment:
-
-
-
-```bash
-
-bash setup\_env.sh
-
-source \~/venvs/mjx/bin/activate
-
-```
-
-
-
-Then submit the GPU job:
-
-
-
-```bash
-
-sbatch submit\_mjx\_gpu.slurm
-
-```
-
-
-
-To monitor the job:
-
-
-
-```bash
-
-squeue -u $USER
-
-tail -f logs/mjx\_ars\_\*.out
-
-```
-
-
-
-The results are saved in:
-
-
+The learning curve comparison is stored in:
 
 ```text
-
-results\_mjx/
-
+results_mjx/learning_curves.png
 ```
 
-
-
-\## Requirements
-
-
-
-The main dependencies are listed in `requirements\_hpc.txt`.
-
-
-
-Main packages:
-
-
+The final rendered policy video is stored in:
 
 ```text
-
-jax
-
-mujoco
-
-mujoco-mjx
-
-numpy
-
-matplotlib
-
-mediapy
-
-imageio-ffmpeg
-
+results_mjx/best_ars_walker2d_policy_over_6.0s__strong_balanced.mp4
 ```
 
+## How to run
 
+Install the dependencies:
 
-\## Notes
+```bash
+pip install -r requirements.txt
+```
 
+Run the full experiment:
 
+```bash
+python run_deliverable4_hpc.py \
+  --run-mode strong \
+  --cem-mode fairer_slow \
+  --train-seconds 6 \
+  --video-seconds 6 \
+  --output-dir results_mjx
+```
 
-The experiment was run on the University of Tartu HPC GPU cluster using a Tesla V100 GPU.
+For live output in an HPC or Slurm environment, use:
 
-The video rendering requires `ffmpeg`; on the HPC, this was provided through the Python virtual environment using `imageio-ffmpeg`.
+```bash
+python -u run_deliverable4_hpc.py \
+  --run-mode strong \
+  --cem-mode fairer_slow \
+  --train-seconds 6 \
+  --video-seconds 6 \
+  --output-dir results_mjx
+```
 
+## Notes
 
+The final experiment was run on a GPU using JAX/MJX batched rollouts. This greatly accelerated the evaluation of candidate policies compared with sequential CPU rollouts.
 
+The final report discusses:
+
+* why ARS scales better than CEM,
+* the effect of JAX/MJX parallelisation,
+* the sample-efficiency comparison,
+* the limitations of using Walker2d instead of the full Humanoid model,
+* and the final locomotion performance.
