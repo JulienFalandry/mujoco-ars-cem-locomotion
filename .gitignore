@@ -5,3 +5,7 @@ __pycache__/
 .ipynb_checkpoints/ 
 venv/ 
 venvs/ 
+README_HPC.md 
+setup_env.sh 
+submit_mjx_gpu.slurm 
+test_jax_gpu.slurm 
