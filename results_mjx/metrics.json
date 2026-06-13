@@ -1,0 +1,23 @@
+{
+  "backend": "gpu",
+  "devices": [
+    "cuda:0"
+  ],
+  "train_seconds": 6.0,
+  "video_seconds": 6.0,
+  "cem_mode": "fairer_slow",
+  "run_mode": "strong_stable",
+  "cem_steps": 34560000,
+  "cem_best_reward": 1509.75244140625,
+  "ars_steps": 323400000,
+  "best_ars_name": "strong_stable",
+  "best_ars_reward": 3814.89599609375,
+  "best_ars_iter": 279,
+  "diagnostic_return": 3814.89599609375,
+  "diagnostic_distance_m": 4.576720714569092,
+  "diagnostic_mean_vx_m_s": 0.7638453841209412,
+  "diagnostic_min_height_m": 0.9011484980583191,
+  "diagnostic_max_abs_pitch_rad": 0.8636895418167114,
+  "diagnostic_first_fall_step": 600,
+  "diagnostic_horizon_steps": 600
+}

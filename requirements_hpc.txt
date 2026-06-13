@@ -1,0 +1,10 @@
+# Install inside your own venv/conda env, not system Python
+# Choose JAX CUDA wheel according to the cluster CUDA version if this fails.
+jax[cuda12]
+mujoco
+mujoco-mjx
+mediapy
+matplotlib
+numpy
+tqdm
+ipykernel
