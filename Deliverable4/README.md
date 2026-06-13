@@ -1,6 +1,6 @@
-# Deliverable 4 — Locomotion Optimisation with ARS and CEM
+# Deliverable 4 — Locomotion Optimization with ARS and CEM
 
-This folder contains the code and results for Deliverable 4 of the Optimisation class project: locomotion optimisation using the Cross-Entropy Method (CEM) and Augmented Random Search (ARS) with MuJoCo MJX and JAX.
+This folder contains the code and results for Deliverable 4 of the Optimization class project: locomotion optimization using Cross Entropy Method (CEM) and Augmented Random Search (ARS) with MuJoCo MJX and JAX.
 
 The original assignment asks for ARS on Humanoid locomotion. In this implementation, the final locomotion experiment is performed on a Walker2d MuJoCo model, which is used as a simpler bipedal locomotion proxy. The goal remains the same: compare the scalability of CEM and ARS on a high-dimensional continuous-control locomotion task.
 
@@ -32,15 +32,15 @@ This script performs:
 * Transfer of the model to MJX
 * Batched rollouts using `jax.vmap`
 * CEM baseline optimization
-* ARS optimisation with state normalisation
+* ARS optimization with state normalization
 * Learning curve generation
 * Policy diagnostics
-* Video rendering of the optimised gait
+* Video rendering of the optimized gait
 * Saving of final metrics and policy parameters
 
 ## Methods
 
-### Cross-Entropy Method
+### Cross Entropy Method
 
 CEM samples a population of candidate policies from a Gaussian distribution. At each iteration, the best-performing elite policies are selected and used to update the sampling distribution.
 
@@ -50,7 +50,7 @@ In this project, CEM is used as a baseline attempt on the locomotion task. It im
 
 ARS evaluates random perturbations of a linear policy. For each direction, the positive and negative perturbations are tested, and the policy is updated using the best-performing directions.
 
-The implemented ARS version uses state normalisation and evaluates perturbations in parallel using MJX and JAX. This makes it more scalable than CEM for locomotion.
+The implemented ARS version uses state normalization and evaluates perturbations in parallel using MJX and JAX. This makes it more scalable than CEM for locomotion.
 
 ## Hyperparameter tuning
 
@@ -140,7 +140,7 @@ The final experiment was run on a GPU using JAX/MJX batched rollouts. This great
 The final report discusses:
 
 * why ARS scales better than CEM,
-* the effect of JAX/MJX parallelisation,
+* the effect of JAX/MJX parallelization,
 * the sample-efficiency comparison,
 * the limitations of using Walker2d instead of the full Humanoid model,
 * and the final locomotion performance.

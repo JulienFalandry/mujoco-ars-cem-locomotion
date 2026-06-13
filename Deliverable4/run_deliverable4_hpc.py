@@ -11,7 +11,7 @@ parser.add_argument(
     default="strong",
     choices=["smoke", "colab_balanced", "colab_sweep", "strong", "strong_stable", "strong_middle"],
     help="ARS tuning mode. Use smoke for a quick test, strong/strong_stable for HPC.")
-parser.add_argument("--cem-mode", default="fairer_slow", choices=["smoke", "extended_colab", "fairer_slow"],
+parser.add_argument("--cem-mode", default="fairer_slow", choices=["smoke", "extended_colab", "fairer_slow", "fairer_long"],
                     help="CEM baseline mode. fairer_slow is suitable for HPC.")
 parser.add_argument("--train-seconds", type=float, default=6.0, help="Training rollout duration in seconds.")
 parser.add_argument("--video-seconds", type=float, default=12.0, help="Rendered video duration in seconds.")
@@ -367,6 +367,7 @@ CEM_CONFIGS_BY_MODE = {
     "smoke": {"iterations": 4, "population": 80, "elite_frac": 0.10},
     "extended_colab": {"iterations": 12, "population": 256, "elite_frac": 0.10},
     "fairer_slow": {"iterations": 30, "population": 384, "elite_frac": 0.10},
+    "fairer_long": {"iterations": 80, "population": 384, "elite_frac": 0.10},
 }
 
 cem_cfg = CEM_CONFIGS_BY_MODE[CEM_MODE]
